@@ -11,12 +11,12 @@ jobs:
           dotnet-version: '9.x'
       - name: Build
         run: |
-          Get-ChildItem -Recurse -Filter *.sln | ForEach-Object {
+          Get-ChildItem -Recurse -Filter *.slnx | ForEach-Object {
             dotnet build $_.FullName
           }
       - name: Run tests
         run: |
-          Get-ChildItem -Recurse -Filter *.sln | ForEach-Object {
+          Get-ChildItem -Recurse -Filter *.slnx | ForEach-Object {
             dotnet test $_.FullName
           }
   build-Ubuntu:
@@ -28,11 +28,11 @@ jobs:
           dotnet-version: '9.x'
       - name: Build
         run: |
-          for solution in $(find . -name "*.sln"); do
+          for solution in $(find . -name "*.slnx"); do
             dotnet build "$solution"
           done
       - name: Run tests
         run: |
-          for solution in $(find . -name "*.sln"); do
+          for solution in $(find . -name "*.slnx"); do
             dotnet test "$solution"
           done
