@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="LocalNet/LocalNet.fsproj" />
+  <Project Path="LocalNetTest/LocalNetTest.fsproj" />
+</Solution>
