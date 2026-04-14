@@ -1,4 +1,7 @@
-﻿namespace Lazy
+﻿// Copyright (c) Murat Khamatyanov. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+namespace Lazy
 
 /// <summary>
 /// Represents a non-thread-safe implementation of a lazy value.
