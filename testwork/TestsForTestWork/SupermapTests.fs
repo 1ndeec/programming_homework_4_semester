@@ -1,4 +1,7 @@
-﻿module TestsForTestWork.Supermap
+﻿// Copyright (c) Murat Khamatyanov. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+module TestsForTestWork.Supermap
 
 open NUnit.Framework
 open FsUnit
