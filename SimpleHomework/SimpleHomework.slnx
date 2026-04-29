@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="SimpleHomework/SimpleHomework.fsproj" />
+  <Project Path="SimpleTests/SimpleTests.fsproj" Id="e0521b01-8be2-4e1a-9606-43fd60785514" />
 </Solution>
