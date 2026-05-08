@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="SecondHomework/SecondHomework.fsproj" />
+  <Project Path="SecondHomeworkTests/SecondHomeworkTests.fsproj" />
+</Solution>
