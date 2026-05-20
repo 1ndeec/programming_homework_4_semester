@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="ModifiedInterpreter/ModifiedInterpreter.fsproj" />
+  <Project Path="ParserTests/ParserTests.fsproj" />
+</Solution>
