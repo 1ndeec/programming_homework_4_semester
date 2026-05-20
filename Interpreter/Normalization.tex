@@ -1,0 +1,55 @@
+\documentclass[12pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T2A]{fontenc}
+\usepackage[english,russian]{babel}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1\baselineskip}
+
+\begin{document}
+
+\section*{Нормализация лямбда-терма}
+
+\text{Исходный терм:}
+\[
+  ((\lambda a. ((\lambda b. b\ b)\ (\lambda b. b\ b)))\ b)
+  \ ((\lambda c. c\ b)\ (\lambda a. a)).
+\]
+
+Обозначим:
+\[
+  \Omega = (\lambda b. b\ b)\ (\lambda b. b\ b).
+\]
+
+Тогда исходный терм можно преобразовать следующим образом:
+\[
+\begin{aligned}
+&
+((\lambda a. ((\lambda b. b\ b)\ (\lambda b. b\ b)))\ b)
+\ ((\lambda c. c\ b)\ (\lambda a. a))
+\\[8pt]
+&\to_{\beta}
+((\lambda b. b\ b)\ (\lambda b. b\ b))
+\ ((\lambda c. c\ b)\ (\lambda a. a))
+\\[8pt]
+&=
+\Omega\ ((\lambda c. c\ b)\ (\lambda a. a))
+\\[8pt]
+&\to_{\beta}
+\Omega\ ((\lambda a. a)\ b)
+\\[8pt]
+&\to_{\beta}
+\Omega\ b.
+\end{aligned}
+\]
+
+где
+\[
+  \Omega = (\lambda b. b\ b)\ (\lambda b. b\ b).
+\]
+
+\end{document}

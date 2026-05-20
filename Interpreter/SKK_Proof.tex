@@ -1,0 +1,44 @@
+\documentclass[12pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T2A,T1]{fontenc}
+\usepackage[english,russian]{babel}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\begin{document}
+
+\section*{Доказательство}
+
+Используем стандартные определения комбинаторов:
+\[
+I \equiv \lambda x.x,
+\]
+\[
+K \equiv \lambda x.\lambda y.x,
+\]
+\[
+S \equiv \lambda x.\lambda y.\lambda z.xz(yz).
+\]
+
+Докажем, что
+\[
+S K K = I.
+\]
+
+Выполним последовательность $\beta$-редукций:
+\[
+\begin{aligned}
+S K K
+&= ((S K) K) \\[4pt]
+&= \bigl((\lambda x.\lambda y.\lambda z.xz(yz))K\bigr)K \\[4pt]
+&\to_{\beta} (\lambda y.\lambda z.Kz(yz))K \\[4pt]
+&\to_{\beta} \lambda z.Kz(Kz) \\[4pt]
+&= \lambda z.(Kz)(Kz) \\[4pt]
+&= \lambda z.\bigl(((\lambda a.\lambda b.a)z)(Kz)\bigr) \\[4pt]
+&\to_{\beta} \lambda z.\bigl((\lambda b.z)(Kz)\bigr) \\[4pt]
+&\to_{\beta} \lambda z.z \\[4pt]
+&= I.
+\end{aligned}
+\]
+\end{document}
