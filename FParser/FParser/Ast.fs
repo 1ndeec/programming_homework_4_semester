@@ -10,15 +10,9 @@ type Term =
     | Lam of string * Term
 
 /// Named definition used by the program before the final expression.
-type Definition =
-    {
-        Name: string
-        Body: Term
-    }
+type Definition = { Name: string; Body: Term }
 
 /// Full input program: definitions followed by one or more expressions.
 type Program =
-    {
-        Definitions: Definition list
-        Expressions: Term list
-    }
+    { Definitions: Definition list
+      Expressions: Term list }

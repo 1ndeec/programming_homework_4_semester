@@ -52,7 +52,7 @@ let ``K combinator should return first argument`` () =
 [<Test>]
 let ``Lambda parameters should keep their declared order`` () =
     parseTerm @"\x y.x"
-    |> should equal (Result.Ok(Lam("x", Lam("y", Var "x"))) : Result<Term, string>)
+    |> should equal (Result.Ok(Lam("x", Lam("y", Var "x"))): Result<Term, string>)
 
 [<Test>]
 let ``Application should be left associative`` () =

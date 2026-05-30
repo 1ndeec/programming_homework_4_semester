@@ -11,8 +11,7 @@ open LambdaInterpreter.Printer
 /// Parses, expands, reduces, and prints a lambda-calculus program from a string.
 let interpretString maxSteps input =
     match parseProgram input with
-    | Result.Error error ->
-        Result.Error error
+    | Result.Error error -> Result.Error error
 
     | Result.Ok program ->
         try
