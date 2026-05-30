@@ -5,6 +5,7 @@ open System.IO
 open NUnit.Framework
 open FsUnit
 
+open LambdaInterpreter.Ast
 open LambdaInterpreter.Interpreter
 open LambdaInterpreter.Parser
 
@@ -49,6 +50,11 @@ let ``K combinator should return first argument`` () =
     run input |> should equal (ok "a")
 
 [<Test>]
+let ``Lambda parameters should keep their declared order`` () =
+    parseTerm @"\x y.x"
+    |> should equal (Result.Ok(Lam("x", Lam("y", Var "x"))) : Result<Term, string>)
+
+[<Test>]
 let ``Application should be left associative`` () =
     let input =
         """
@@ -69,19 +75,35 @@ let ``Parser should reject let as variable name`` () =
     | Result.Error _ -> Assert.Pass()
 
 [<Test>]
-let ``Duplicate definitions should be rejected`` () =
+let ``Duplicate definitions should use the last value`` () =
     let input =
         """
 let I = \x.x
-let I = \y.y
+let I = K
 
 I
 """
 
-    match run input with
-    | Result.Ok result -> Assert.Fail $"Interpreter unexpectedly accepted duplicate definitions: {result}"
+    run input |> should equal (ok "K")
 
-    | Result.Error error -> error |> should haveSubstring "Duplicate definition"
+[<Test>]
+let ``Parser should reject identifiers made only from underscores`` () =
+    match parseTerm "___" with
+    | Result.Ok term -> Assert.Fail $"Parser unexpectedly accepted term: {term}"
+
+    | Result.Error _ -> Assert.Pass()
+
+[<Test>]
+let ``Program can evaluate several expression lines`` () =
+    let input =
+        """
+let I = \x.x
+
+I a
+I b
+"""
+
+    run input |> should equal (ok $"a{Environment.NewLine}b")
 
 [<Test>]
 let ``Alpha conversion should prevent variable capture`` () =

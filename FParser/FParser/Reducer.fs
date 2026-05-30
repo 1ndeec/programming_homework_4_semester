@@ -88,14 +88,12 @@ let substitute variable replacement term =
     subst term
 
 /// Replaces free occurrences of named definitions in the final program expression.
-let expandDefinitions program =
+let expandDefinitions definitions expression =
     let definitions =
-        program.Definitions
-        |> List.map (fun definition -> definition.Name, definition.Body)
-        |> Map.ofList
+        definitions
+        |> List.fold (fun acc definition -> Map.add definition.Name definition.Body acc) Map.empty
 
-    // Recursively expands definitions while respecting lambda-bound variables.
-    let rec expand boundNames visitingDefinitions term =
+    let rec expandTerm boundNames visitingDefinitions term =
         match term with
         | Var name when Set.contains name boundNames -> Var name
 
@@ -106,14 +104,20 @@ let expandDefinitions program =
                 if Set.contains name visitingDefinitions then
                     failwith $"Cyclic definition involving '{name}'."
                 else
-                    expand boundNames (Set.add name visitingDefinitions) body
+                    expandTerm Set.empty (Set.add name visitingDefinitions) body
 
         | App(left, right) ->
-            App(expand boundNames visitingDefinitions left, expand boundNames visitingDefinitions right)
+            App(expandTerm boundNames visitingDefinitions left, expandTerm boundNames visitingDefinitions right)
 
-        | Lam(param, body) -> Lam(param, expand (Set.add param boundNames) visitingDefinitions body)
+        | Lam(param, body) -> Lam(param, expandTerm (Set.add param boundNames) visitingDefinitions body)
 
-    expand Set.empty Set.empty program.Expression
+    let expandedDefinitions =
+        definitions
+        |> Map.map (fun name body -> expandTerm Set.empty (Set.singleton name) body)
+
+    expandedDefinitions
+    |> Map.toList
+    |> List.fold (fun acc (name, body) -> substitute name body acc) expression
 
 /// Performs one beta-reduction step using normal-order strategy.
 let rec reduceOnceNormal term =

@@ -16,9 +16,9 @@ type Definition =
         Body: Term
     }
 
-/// Full input program: definitions followed by one final expression.
+/// Full input program: definitions followed by one or more expressions.
 type Program =
     {
         Definitions: Definition list
-        Expression: Term
+        Expressions: Term list
     }

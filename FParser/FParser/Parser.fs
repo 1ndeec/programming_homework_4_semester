@@ -38,6 +38,8 @@ let identifier: P<string> =
     >>= fun name ->
         if name = "let" then
             fail "keyword 'let' cannot be used as an identifier"
+        elif not (name |> Seq.exists Char.IsLetter) then
+            fail "identifier must contain at least one letter"
         else
             preturn name
 
@@ -67,7 +69,7 @@ let private application: P<Term> = many1 atom |>> makeApplication
 
 /// Builds nested lambda abstractions from a list of parameters.
 let private makeLambda (args, body) =
-    args |> List.rev |> List.fold (fun acc arg -> Lam(arg, acc)) body
+    List.foldBack (fun arg acc -> Lam(arg, acc)) args body
 
 /// Parses a lambda abstraction with one or more parameters.
 let private abstraction: P<Term> =
@@ -100,7 +102,7 @@ let private normalizeNewLines (text: string) =
 /// Checks whether a line starts with a definition.
 let private isLetLine (line: string) = line.TrimStart().StartsWith("let ")
 
-/// Parses a full program with definitions followed by a final expression.
+/// Parses a full program with definitions followed by expression lines.
 let parseProgram (input: string) : Result<Program, string> =
     // Non-empty normalized input lines.
     let lines =
@@ -130,21 +132,24 @@ let parseProgram (input: string) : Result<Program, string> =
         | Some badLine -> Result.Error $"Definitions must appear before the final expression. Bad line: {badLine}"
 
         | None ->
-            let duplicate =
-                definitions
-                |> List.countBy (fun definition -> definition.Name)
-                |> List.tryFind (fun (_, count) -> count > 1)
+            let parseExpressionLine line =
+                match parseTerm line with
+                | Result.Ok expression -> Result.Ok expression
+                | Result.Error error -> Result.Error $"Invalid expression line: {line}\n{error}"
 
-            match duplicate with
-            | Some(name, _) -> Result.Error $"Duplicate definition: {name}"
+            let rec parseExpressions acc rest =
+                match rest with
+                | [] -> Result.Ok(List.rev acc)
 
-            | None ->
-                let expressionText = String.concat " " expressionLines
+                | line :: tail ->
+                    match parseExpressionLine line with
+                    | Result.Ok expression -> parseExpressions (expression :: acc) tail
+                    | Result.Error error -> Result.Error error
 
-                match parseTerm expressionText with
-                | Result.Ok expression ->
-                    Result.Ok
-                        { Definitions = definitions
-                          Expression = expression }
+            match parseExpressions [] expressionLines with
+            | Result.Ok expressions ->
+                Result.Ok
+                    { Definitions = definitions
+                      Expressions = expressions }
 
-                | Result.Error error -> Result.Error $"Invalid final expression:\n{error}"
+            | Result.Error error -> Result.Error error

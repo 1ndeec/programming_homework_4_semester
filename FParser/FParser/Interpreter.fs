@@ -16,12 +16,22 @@ let interpretString maxSteps input =
 
     | Result.Ok program ->
         try
-            let expanded = expandDefinitions program
+            let interpretExpression expression =
+                expandDefinitions program.Definitions expression
+                |> normalize maxSteps
+                |> Result.map alphaNormalize
+                |> Result.map toString
 
-            expanded
-            |> normalize maxSteps
-            |> Result.map alphaNormalize
-            |> Result.map toString
+            program.Expressions
+            |> List.map interpretExpression
+            |> List.fold
+                (fun acc result ->
+                    match acc, result with
+                    | Result.Error error, _ -> Result.Error error
+                    | _, Result.Error error -> Result.Error error
+                    | Result.Ok values, Result.Ok value -> Result.Ok(value :: values))
+                (Result.Ok [])
+            |> Result.map (List.rev >> String.concat System.Environment.NewLine)
 
         with ex ->
             Result.Error ex.Message
