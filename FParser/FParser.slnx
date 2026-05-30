@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="FParser/FParser.fsproj" />
+  <Project Path="FParserTests/FParserTests.fsproj" />
+</Solution>
