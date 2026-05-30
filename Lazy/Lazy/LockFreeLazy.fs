@@ -3,7 +3,9 @@
 
 namespace Lazy
 
+open System
 open System.Threading
+
 /// <summary>
 /// Boxed is created so we would be able to differ the actual null supplier from null, which the LockFreeLazy returns when task is not yet completed
 /// </summary>
@@ -12,25 +14,47 @@ type private Boxed<'a>(value : 'a) =
     member _.Value = value
 
 /// <summary>
-/// Represents a lock-free implementation of a lazy value.
-/// The value is published atomically and then reused on later calls.
+/// Represents a CAS-based lazy value.
+/// Exactly one thread is allowed to compute the value.
+/// Other threads wait until the computed value is published.
 /// </summary>
-type LockFreeLazy<'a>(supplier : unit -> 'a) =
-    let mutable boxed : Boxed<'a> = null
+type LockFreeLazy<'a>(supplier: unit -> 'a) =
+    let calculating = obj()
+    let mutable state: obj = null
 
     interface ILazy<'a> with
         /// <summary>
-        /// Returns the stored value if it has already been published.
-        /// Otherwise computes the value and tries to publish it atomically.
+        /// Returns the stored value if it has already been computed.
+        /// Otherwise one thread becomes the computing thread, calls supplier,
+        /// and publishes the result. Other threads spin until the result appears.
         /// </summary>
         member _.Get() =
-            let current = Volatile.Read(&boxed)
-            if not (isNull current) then
-                current.Value
-            else
-                let computed = Boxed(supplier())
-                let original = Interlocked.CompareExchange(&boxed, computed, null)
-                if isNull original then
-                    computed.Value
+            let spinner = SpinWait()
+
+            let rec loop () =
+                let current = Volatile.Read(&state)
+
+                if isNull current then
+                    let previous =
+                        Interlocked.CompareExchange(&state, calculating, null)
+
+                    if isNull previous then
+                        try
+                            let computed = Boxed(supplier())
+                            Volatile.Write(&state, computed :> obj)
+                            computed.Value
+                        with
+                        | _ ->
+                            Volatile.Write(&state, null)
+                            reraise()
+                    else
+                        loop ()
+
+                elif Object.ReferenceEquals(current, calculating) then
+                    spinner.SpinOnce()
+                    loop ()
+
                 else
-                    original.Value
+                    (current :?> Boxed<'a>).Value
+
+            loop ()

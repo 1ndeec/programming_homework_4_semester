@@ -3,6 +3,8 @@
 
 namespace Lazy
 
+open System.Threading
+
 /// <summary>
 /// Represents a thread-safe implementation of a lazy value.
 /// The value is computed once and then returned on every later call.
@@ -18,10 +20,11 @@ type ThreadSafeLazy<'a>(supplier : unit -> 'a) =
         /// Otherwise computes it inside a lock to ensure thread safety.
         /// </summary>
         member _.Get() =
-            if not isValueCreated then
+            if not (Volatile.Read(&isValueCreated)) then
                 lock syncRoot (fun () ->
-                    if not isValueCreated then
+                    if not (Volatile.Read(&isValueCreated)) then
                         value <- supplier()
-                        isValueCreated <- true
+                        Volatile.Write(&isValueCreated, true)
                 )
+
             value
