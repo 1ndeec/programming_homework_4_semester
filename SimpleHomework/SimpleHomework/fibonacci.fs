@@ -5,11 +5,11 @@ module SimpleHomework.Fibonacci
 
 /// <summary>
 /// Calculates the n-th Fibonacci number.
-/// Throws an ArgumentException if n is negative.
+/// Returns None if n is negative.
 /// </summary>
 let fibonacci n =
     let rec loop a b i =
-        if i = n then a else loop b (a + b) (i + 1)
+        if i = n then Some a else loop b (a + b) (i + 1)
 
-    if n < 0 then invalidArg "n" "n must be non-negative"
+    if n < 0 then None
     else loop 0 1 0

@@ -85,18 +85,17 @@ module ReverseTests =
 module FibonacciTests =
 
     [<Test>]
-    let ``fibonacci of zero should return zero`` () =
-        fibonacci 0 |> should equal 0
+    let ``fibonacci of zero should return Some zero`` () =
+        fibonacci 0 |> should equal (Some 0)
 
     [<Test>]
-    let ``fibonacci of one should return one`` () =
-        fibonacci 1 |> should equal 1
+    let ``fibonacci of one should return Some one`` () =
+        fibonacci 1 |> should equal (Some 1)
 
     [<Test>]
-    let ``fibonacci of six should return eight`` () =
-        fibonacci 6 |> should equal 8
+    let ``fibonacci of six should return Some eight`` () =
+        fibonacci 6 |> should equal (Some 8)
 
     [<Test>]
-    let ``fibonacci should throw when n is negative`` () =
-        (fun () -> fibonacci -1 |> ignore)
-        |> should throw typeof<ArgumentException>
+    let ``fibonacci should return None when n is negative`` () =
+        fibonacci -1 |> should equal None
