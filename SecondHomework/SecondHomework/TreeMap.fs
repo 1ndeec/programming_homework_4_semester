@@ -19,6 +19,10 @@ type TraversalOrder =
     | Infix
     | Postfix
 
+type LinearizationStep<'T> =
+    | Finished
+    | Step of 'T * (unit -> LinearizationStep<'T>)
+
 /// <summary>
 /// Applies the given function to every value in the binary tree
 /// and returns a new tree with the same structure.
@@ -31,11 +35,36 @@ let rec mapTree f tree =
 /// <summary>
 /// Converts a binary tree into a list of values using the selected traversal order.
 /// </summary>
-let rec linearize order tree =
-    match tree with
-    | Empty -> []
-    | Node(left, value, right) ->
-        match order with
-        | Prefix -> [ value ] @ linearize order left @ linearize order right
-        | Infix -> linearize order left @ [ value ] @ linearize order right
-        | Postfix -> linearize order left @ linearize order right @ [ value ]
+let linearize order tree =
+    let rec linearizeStep tree continuation =
+        match tree with
+        | Empty -> continuation()
+        | Node(left, value, right) ->
+            match order with
+            | Prefix ->
+                Step(
+                    value,
+                    fun () -> linearizeStep left (fun () -> linearizeStep right continuation)
+                )
+            | Infix ->
+                linearizeStep
+                    left
+                    (fun () ->
+                        Step(
+                            value,
+                            fun () -> linearizeStep right continuation
+                        ))
+            | Postfix ->
+                linearizeStep
+                    left
+                    (fun () ->
+                        linearizeStep
+                            right
+                            (fun () -> Step(value, continuation)))
+
+    let rec collect acc step =
+        match step with
+        | Finished -> List.rev acc
+        | Step(value, getNext) -> collect (value :: acc) (getNext())
+
+    collect [] (linearizeStep tree (fun () -> Finished))

@@ -7,8 +7,10 @@ module SecondHomework.PrimeNumbers
 /// Checks whether the given integer is a prime number.
 /// </summary>
 let isPrime number =
-    number > 1
-    && seq { 2 .. int (sqrt (float number)) }
+    number = 2 ||
+    number > 2
+    && number % 2 <> 0
+    && seq { 3 .. 2 .. int (sqrt (float number)) }
        |> Seq.forall (fun divisor -> number % divisor <> 0)
 
 /// <summary>

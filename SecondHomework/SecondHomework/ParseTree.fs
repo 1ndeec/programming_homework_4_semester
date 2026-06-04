@@ -27,6 +27,10 @@ type TraversalOrder =
     | Infix
     | Postfix
 
+type LinearizationStep =
+    | Finished
+    | Step of string * (unit -> LinearizationStep)
+
 /// <summary>
 /// Calculates the value of an arithmetic expression parse tree.
 /// </summary>
@@ -47,18 +51,45 @@ let rec evaluate expression =
 /// Converts an expression parse tree into a list of string tokens
 /// using the selected traversal order.
 /// </summary>
-let rec linearize order expression =
-    match expression with
-    | Number value -> [ string value ]
-    | BinaryOperation(operator, left, right) ->
-        let operatorText =
-            match operator with
-            | Add -> "+"
-            | Subtract -> "-"
-            | Multiply -> "*"
-            | Divide -> "/"
+let linearize order expression =
+    let operatorToString operator =
+        match operator with
+        | Add -> "+"
+        | Subtract -> "-"
+        | Multiply -> "*"
+        | Divide -> "/"
 
-        match order with
-        | Prefix -> [ operatorText ] @ linearize order left @ linearize order right
-        | Infix -> linearize order left @ [ operatorText ] @ linearize order right
-        | Postfix -> linearize order left @ linearize order right @ [ operatorText ]
+    let rec linearizeStep expression continuation =
+        match expression with
+        | Number value -> Step(string value, continuation)
+        | BinaryOperation(operator, left, right) ->
+            let operatorText = operatorToString operator
+
+            match order with
+            | Prefix ->
+                Step(
+                    operatorText,
+                    fun () -> linearizeStep left (fun () -> linearizeStep right continuation)
+                )
+            | Infix ->
+                linearizeStep
+                    left
+                    (fun () ->
+                        Step(
+                            operatorText,
+                            fun () -> linearizeStep right continuation
+                        ))
+            | Postfix ->
+                linearizeStep
+                    left
+                    (fun () ->
+                        linearizeStep
+                            right
+                            (fun () -> Step(operatorText, continuation)))
+
+    let rec collect acc step =
+        match step with
+        | Finished -> List.rev acc
+        | Step(token, getNext) -> collect (token :: acc) (getNext())
+
+    collect [] (linearizeStep expression (fun () -> Finished))
