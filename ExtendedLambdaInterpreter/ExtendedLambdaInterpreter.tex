@@ -1,0 +1,168 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setmainlanguage{russian}
+\setotherlanguage{english}
+\setmainfont{Times New Roman}
+\setmonofont{Consolas}
+\usepackage{geometry}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\geometry{margin=2.5cm}
+\setlist{nosep}
+\lstdefinestyle{grammar}{
+  basicstyle=\ttfamily\small,
+  columns=fullflexible,
+  keepspaces=true,
+  frame=single,
+  framerule=0.2pt,
+  xleftmargin=0.4cm,
+  xrightmargin=0.4cm,
+  breaklines=true
+}
+
+\title{Грамматика}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section*{Терминалы}
+
+Пробельные символы, кроме перевода строки после определения, считаются
+разделителями и не входят в грамматику. Ключевое слово \texttt{let} не
+считается переменной.
+
+\begin{lstlisting}[style=grammar]
+LET       ::= "let"
+LAMBDA    ::= "\"
+EQUALS    ::= "="
+DOT       ::= "."
+LPAREN    ::= "("
+RPAREN    ::= ")"
+NEWLINE   ::= "\n"
+EOF       ::= end of input
+
+VARIABLE  ::= LETTER { LETTER | DIGIT | "_" }
+LETTER    ::= "a".."z" | "A".."Z"
+DIGIT     ::= "0".."9"
+\end{lstlisting}
+
+\section*{Факторизованная EBNF-грамматика}
+
+Грамматика описывает набор именованных определений и одно основное
+лямбда-выражение. Лямбда-абстракции с несколькими параметрами разрешены:
+\texttt{\textbackslash x y z. expr} означает
+\texttt{\textbackslash x.\textbackslash y.\textbackslash z. expr}.
+
+\begin{lstlisting}[style=grammar]
+program              ::= { definition } expression EOF
+
+definition           ::= LET VARIABLE EQUALS expression NEWLINE
+
+expression           ::= abstraction
+                       | application
+
+abstraction          ::= LAMBDA variable-list DOT expression
+
+variable-list        ::= VARIABLE { VARIABLE }
+
+application          ::= operand { operand } [ abstraction ]
+
+operand              ::= VARIABLE
+                       | LPAREN expression RPAREN
+\end{lstlisting}
+
+В записи используются EBNF-операторы \texttt{\{...\}} и \texttt{[...]};
+отдельных правил вида \texttt{A ::= epsilon} в грамматике нет. Для
+парсера это означает обычные циклы и проверку следующего токена.
+
+
+\section*{Примеры вывода}
+
+\subsection*{Пример 1}
+
+Вход:
+
+\begin{lstlisting}[style=grammar]
+let S = \x y z.x z (y z)
+let K = \x y.x
+S K K
+\end{lstlisting}
+
+Вывод по грамматике:
+
+\begin{lstlisting}[style=grammar]
+program
+=> { definition } expression EOF
+=> definition definition expression EOF
+=> let S = expression NEWLINE let K = expression NEWLINE expression EOF
+=> let S = abstraction NEWLINE let K = abstraction NEWLINE application EOF
+=> let S = \ variable-list . expression NEWLINE let K = \ variable-list . expression NEWLINE S K K EOF
+=> let S = \ x y z . application NEWLINE let K = \ x y . application NEWLINE S K K EOF
+=> let S = \ x y z . x z (y z) NEWLINE let K = \ x y . x NEWLINE S K K EOF
+\end{lstlisting}
+
+После подстановки определений и бета-редукции нормальная форма:
+
+\begin{lstlisting}[style=grammar]
+\x.x
+\end{lstlisting}
+
+\subsection*{Пример 2}
+
+Вход:
+
+\begin{lstlisting}[style=grammar]
+x \y.y
+\end{lstlisting}
+
+Вывод по грамматике:
+
+\begin{lstlisting}[style=grammar]
+program
+=> { definition } expression EOF
+=> expression EOF
+=> application EOF
+=> operand [ abstraction ] EOF
+=> x abstraction EOF
+=> x \ variable-list . expression EOF
+=> x \ y . application EOF
+=> x \ y . operand EOF
+=> x \ y . y EOF
+\end{lstlisting}
+
+Это выражение читается как:
+
+\begin{lstlisting}[style=grammar]
+x (\y.y)
+\end{lstlisting}
+
+\subsection*{Пример 3}
+
+Вход:
+
+\begin{lstlisting}[style=grammar]
+(\x.x) y
+\end{lstlisting}
+
+Вывод по грамматике:
+
+\begin{lstlisting}[style=grammar]
+program
+=> { definition } expression EOF
+=> expression EOF
+=> application EOF
+=> operand { operand } EOF
+=> ( expression ) operand EOF
+=> ( abstraction ) y EOF
+=> ( \ variable-list . expression ) y EOF
+=> ( \ x . application ) y EOF
+=> ( \ x . x ) y EOF
+\end{lstlisting}
+
+\end{document}
