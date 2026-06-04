@@ -1,13 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
 	<Compile Include="OperatingSystem.fs" />
-	<Compile Include="InfectionConfig.fs" />	  
 	<Compile Include="IProbabilitySource.fs" />
 	<Compile Include="RandomProbabilitySource.fs" />
 	<Compile Include="Computer.fs" />

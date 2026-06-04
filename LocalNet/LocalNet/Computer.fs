@@ -6,7 +6,7 @@ namespace LocalNet
 /// <summary>
 /// Represents a computer in the local network with its operating system and infection state.
 /// </summary>
-type Computer(id: int, os: OperatingSystem, initiallyInfected: bool) =
+type Computer(id: int, os: IOperatingSystem, initiallyInfected: bool) =
     let mutable infected = initiallyInfected
 
     /// <summary>
@@ -34,11 +34,5 @@ type Computer(id: int, os: OperatingSystem, initiallyInfected: bool) =
     /// Returns a readable string representation of the computer state.
     /// </summary>
     override _.ToString() =
-        let osName =
-            match os with
-            | Windows -> "Windows"
-            | Linux -> "Linux"
-            | MacOS -> "MacOS"
-
         let state = if infected then "infected" else "healthy"
-        $"Computer {id}: {osName}, {state}"
+        $"Computer {id}: {os.Name}, {state}"

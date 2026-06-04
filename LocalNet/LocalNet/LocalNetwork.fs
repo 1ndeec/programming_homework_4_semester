@@ -10,7 +10,6 @@ type LocalNetwork
     (
         computers: Computer[],
         adjacencyMatrix: bool[,],
-        infectionConfig: InfectionConfig,
         probabilitySource: IProbabilitySource
     ) =
 
@@ -35,26 +34,29 @@ type LocalNetwork
             computers
             |> Array.mapi (fun i c -> i, c)
             |> Array.filter (fun (_, c) -> c.IsInfected)
-            |> Array.map fst
-            |> Set.ofArray
 
         let toTryInfect =
-            computers
-            |> Array.mapi (fun i c -> i, c)
-            |> Array.choose (fun (targetIndex, targetComputer) ->
-                if targetComputer.IsInfected then
-                    None
-                else
-                    let hasInfectedNeighbor =
-                        infectedAtStart
-                        |> Set.exists (fun infectedIndex -> adjacencyMatrix[infectedIndex, targetIndex])
-
-                    if hasInfectedNeighbor then Some targetComputer else None)
+            infectedAtStart
+            |> Seq.collect (fun (infectedIndex, _) ->
+                computers
+                |> Array.mapi (fun targetIndex targetComputer -> targetIndex, targetComputer)
+                |> Array.choose (fun (targetIndex, targetComputer) ->
+                    if
+                        adjacencyMatrix[infectedIndex, targetIndex]
+                        && not targetComputer.IsInfected
+                        && targetComputer.OS.InfectionProbability > 0.0
+                    then
+                        Some targetIndex
+                    else
+                        None))
+            |> Set.ofSeq
 
         toTryInfect
-        |> Array.iter (fun computer ->
-            let p = infectionConfig.ForOs(computer.OS)
-            if probabilitySource.Happened(p) then
+        |> Set.iter (fun targetIndex ->
+            let computer = computers[targetIndex]
+            let p = computer.OS.InfectionProbability
+
+            if p > 0.0 && probabilitySource.Happened(p) then
                 computer.Infect())
 
     /// <summary>
@@ -65,6 +67,7 @@ type LocalNetwork
         |> Array.mapi (fun i c -> i, c)
         |> Array.exists (fun (i, c) ->
             not c.IsInfected &&
+            c.OS.InfectionProbability > 0.0 &&
             (computers
              |> Array.mapi (fun j other -> j, other)
              |> Array.exists (fun (j, other) ->
